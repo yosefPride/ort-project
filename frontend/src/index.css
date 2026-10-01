@@ -1,0 +1,6 @@
+@import 'tailwindcss';
+
+/* Page background behind the signed-in app (public pages are plain black). Use `bg-surface`. */
+@theme {
+  --color-surface: #141414;
+}
