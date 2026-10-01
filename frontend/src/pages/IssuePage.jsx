@@ -1,22 +1,22 @@
 import { useState } from 'react';
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { ArrowLeft, FileText, MessageSquare, MoreVertical, Pencil } from 'lucide-react';
-import Markdown from '../../components/Markdown';
-import Button from '../../components/ui/Button';
-import ConfirmModal from '../../components/ui/ConfirmModal';
-import Loading from '../../components/ui/Loading';
-import Menu, { MenuItem } from '../../components/ui/Menu';
-import Modal from '../../components/ui/Modal';
-import { useGet } from '../../hooks/useGet';
-import { useRefresh } from '../../hooks/useRefresh';
-import { useSend } from '../../hooks/useSend';
-import { useTeam } from '../../hooks/useTeam';
-import { formatDateTime, formatRelativeTime } from '../../utils/dates';
-import AiChat from '../chat/AiChat';
-import Comments from '../comment/Comments';
-import IssueForm from './IssueForm';
-import IssueMeta from './IssueMeta';
-import IssueTab from './IssueTab';
+import Markdown from '../components/Markdown';
+import Button from '../components/ui/Button';
+import ConfirmModal from '../components/ui/ConfirmModal';
+import Loading from '../components/ui/Loading';
+import Menu, { MenuItem } from '../components/ui/Menu';
+import Modal from '../components/ui/Modal';
+import { useGet } from '../hooks/useGet';
+import { useRefresh } from '../hooks/useRefresh';
+import { useSend } from '../hooks/useSend';
+import { useTeam } from '../hooks/useTeam';
+import { formatDateTime, formatRelativeTime } from '../utils/dates';
+import AiChat from '../features/chat/AiChat';
+import Comments from '../features/comment/Comments';
+import IssueForm from '../features/issue/IssueForm';
+import IssueMeta from '../features/issue/IssueMeta';
+import IssueTab from '../features/issue/IssueTab';
 
 const PANEL = 'h-128 rounded-xl border border-white/10 bg-white/5 p-6 lg:h-auto lg:min-h-0 lg:flex-1';
 

@@ -1,5 +1,5 @@
-import AppLayout from './AppLayout';
-import Button from './ui/Button';
+import AppLayout from '../components/AppLayout';
+import Button from '../components/ui/Button';
 
 // Signed-in visitors see it inside the normal app frame; everyone else on plain black.
 export default function NotFound({ me }) {

@@ -1,19 +1,19 @@
 import { useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Clock, Pencil, Ticket, User } from 'lucide-react';
-import Button from '../../components/ui/Button';
-import ConfirmModal from '../../components/ui/ConfirmModal';
-import Loading from '../../components/ui/Loading';
-import Modal from '../../components/ui/Modal';
-import StatTile from '../../components/ui/StatTile';
-import { useGet } from '../../hooks/useGet';
-import { useRefresh } from '../../hooks/useRefresh';
-import { useSend } from '../../hooks/useSend';
-import { useTeam } from '../../hooks/useTeam';
-import { formatRelativeTime } from '../../utils/dates';
-import { roleLabel } from '../../utils/labels';
-import MemberList from './MemberList';
-import RenameTeamForm from './RenameTeamForm';
+import Button from '../components/ui/Button';
+import ConfirmModal from '../components/ui/ConfirmModal';
+import Loading from '../components/ui/Loading';
+import Modal from '../components/ui/Modal';
+import StatTile from '../components/ui/StatTile';
+import { useGet } from '../hooks/useGet';
+import { useRefresh } from '../hooks/useRefresh';
+import { useSend } from '../hooks/useSend';
+import { useTeam } from '../hooks/useTeam';
+import { formatRelativeTime } from '../utils/dates';
+import { roleLabel } from '../utils/labels';
+import MemberList from '../features/team/MemberList';
+import RenameTeamForm from '../features/team/RenameTeamForm';
 
 export default function TeamPage({ me }) {
   const { teamId } = useParams();

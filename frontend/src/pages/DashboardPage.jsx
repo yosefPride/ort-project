@@ -1,14 +1,14 @@
 import { useState } from 'react';
 import { Plus, UserPlus } from 'lucide-react';
-import Button from '../../components/ui/Button';
-import Loading from '../../components/ui/Loading';
-import Modal from '../../components/ui/Modal';
-import { useGet } from '../../hooks/useGet';
-import CreateTeamForm from '../team/CreateTeamForm';
-import DashboardStats from './DashboardStats';
-import NewIssueForm from './NewIssueForm';
-import RecentActivity from './RecentActivity';
-import TeamList from './TeamList';
+import Button from '../components/ui/Button';
+import Loading from '../components/ui/Loading';
+import Modal from '../components/ui/Modal';
+import { useGet } from '../hooks/useGet';
+import CreateTeamForm from '../features/team/CreateTeamForm';
+import DashboardStats from '../features/dashboard/DashboardStats';
+import NewIssueForm from '../features/dashboard/NewIssueForm';
+import RecentActivity from '../features/dashboard/RecentActivity';
+import TeamList from '../features/dashboard/TeamList';
 
 export default function DashboardPage({ me }) {
   const { data: teams = [], status } = useGet('/teams');

@@ -1,11 +1,11 @@
 import { useNavigate } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';
-import Button from '../../components/ui/Button';
-import ErrorText from '../../components/ui/ErrorText';
-import Field from '../../components/ui/Field';
-import Input from '../../components/ui/Input';
-import { useForm } from '../../hooks/useForm';
-import { useSend } from '../../hooks/useSend';
+import Button from '../components/ui/Button';
+import ErrorText from '../components/ui/ErrorText';
+import Field from '../components/ui/Field';
+import Input from '../components/ui/Input';
+import { useForm } from '../hooks/useForm';
+import { useSend } from '../hooks/useSend';
 
 // "Log in" and "Create your account" share this page; `mode` picks which one.
 export default function AuthPage({ mode }) {

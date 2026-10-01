@@ -3,4 +3,36 @@
 /* Page background behind the signed-in app (public pages are plain black). Use `bg-surface`. */
 @theme {
   --color-surface: #141414;
+
+  /* Landing-page feature cards (features/landing). All share one 4s loop so the cards stay
+     in step; single elements are offset with an inline animation-delay. */
+  --animate-node-in: node-in 4s ease-in-out infinite;
+  --animate-trail-in: trail-in 4s ease-in-out infinite;
+  --animate-bar-rise: bar-rise 4s ease-in-out infinite;
+}
+
+/* Each one builds, holds the finished picture for most of the loop, and only resets at the end. */
+@keyframes node-in {
+  0%, 30% { opacity: 0; }
+  48%, 92% { opacity: 1; }
+  100% { opacity: 0; }
+}
+
+@keyframes trail-in {
+  0%, 8% { opacity: 0; transform: translateY(6px); }
+  28%, 92% { opacity: 1; transform: none; }
+  100% { opacity: 0; transform: translateY(6px); }
+}
+
+@keyframes bar-rise {
+  0%, 8% { transform: scaleY(0); }
+  42%, 92% { transform: scaleY(1); }
+  100% { transform: scaleY(0); }
+}
+
+/* With reduced motion the cards just show their finished picture. */
+@media (prefers-reduced-motion: reduce) {
+  [data-showcase-art] * {
+    animation: none !important;
+  }
 }

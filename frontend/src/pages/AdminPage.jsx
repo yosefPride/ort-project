@@ -1,7 +1,7 @@
 import { useState } from 'react';
-import AuditLogPanel from './AuditLogPanel';
-import TeamsPanel from './TeamsPanel';
-import UsersPanel from './UsersPanel';
+import AuditLogPanel from '../features/admin/AuditLogPanel';
+import TeamsPanel from '../features/admin/TeamsPanel';
+import UsersPanel from '../features/admin/UsersPanel';
 
 const TABS = [
   { id: 'users', label: 'Users' },

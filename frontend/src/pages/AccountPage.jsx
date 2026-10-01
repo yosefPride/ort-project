@@ -1,6 +1,6 @@
-import PasswordForm from './PasswordForm';
-import ProfileForm from './ProfileForm';
-import ProfileSummary from './ProfileSummary';
+import PasswordForm from '../features/account/PasswordForm';
+import ProfileForm from '../features/account/ProfileForm';
+import ProfileSummary from '../features/account/ProfileSummary';
 
 export default function AccountPage({ me }) {
   return (

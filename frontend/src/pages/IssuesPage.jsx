@@ -1,13 +1,13 @@
 import { useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { ChevronDown, Plus } from 'lucide-react';
-import Button from '../../components/ui/Button';
-import Loading from '../../components/ui/Loading';
-import Menu, { MenuItem } from '../../components/ui/Menu';
-import Modal from '../../components/ui/Modal';
-import { useGet } from '../../hooks/useGet';
-import IssueForm from './IssueForm';
-import IssueList from './IssueList';
+import Button from '../components/ui/Button';
+import Loading from '../components/ui/Loading';
+import Menu, { MenuItem } from '../components/ui/Menu';
+import Modal from '../components/ui/Modal';
+import { useGet } from '../hooks/useGet';
+import IssueForm from '../features/issue/IssueForm';
+import IssueList from '../features/issue/IssueList';
 
 // One team's issues. The team is in the URL (?team=<id>), so refreshing or sharing the link keeps it.
 export default function IssuesPage() {

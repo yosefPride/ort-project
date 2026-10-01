@@ -1,15 +1,15 @@
 import { Navigate, Route, Routes } from 'react-router-dom';
 import AppLayout from './components/AppLayout';
-import NotFound from './components/NotFound';
-import AccountPage from './features/account/AccountPage';
-import AdminPage from './features/admin/AdminPage';
-import AuthPage from './features/auth/AuthPage';
-import Landing from './features/auth/Landing';
-import DashboardPage from './features/dashboard/DashboardPage';
-import IssuePage from './features/issue/IssuePage';
-import IssuesPage from './features/issue/IssuesPage';
-import TeamPage from './features/team/TeamPage';
 import { useGet } from './hooks/useGet';
+import AccountPage from './pages/AccountPage';
+import AdminPage from './pages/AdminPage';
+import AuthPage from './pages/AuthPage';
+import DashboardPage from './pages/DashboardPage';
+import IssuePage from './pages/IssuePage';
+import IssuesPage from './pages/IssuesPage';
+import Landing from './pages/Landing';
+import NotFound from './pages/NotFound';
+import TeamPage from './pages/TeamPage';
 
 export default function App() {
   const { data: me, isPending } = useGet('/auth/me');
