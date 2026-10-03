@@ -22,7 +22,7 @@ own **issues**, with comments, emoji reactions and a private AI assistant
 - **Dashboard:** counts of your teams, open issues, critical/high issues and
   issues assigned to you, plus recent activity.
 - **Admin panel** for system admins: manage users and teams, and read the
-  **audit log**, which records every deletion in the system.
+  **audit log**, which records every user and team deletion.
 
 ## Tech stack
 
@@ -118,9 +118,10 @@ database query. A handler can't read or change another team's data by mistake.
 **Dashboard.** There is no dashboard endpoint. `GET /teams` returns each team
 with its issue counts, and the dashboard adds them up.
 
-**Audit log.** Every deletion (users, teams, members, issues, comments,
-reactions, AI chats) is written to `audit_logs` with who did it and what was
-deleted, and is shown in the admin panel.
+**Audit log.** Only admin actions are logged: deleting a user or a team is
+written to `audit_logs` with who did it and what was deleted, and is shown in
+the admin panel. Everyday deletions (members, issues, comments, reactions, AI
+chats) are not logged.
 
 **AI.** The AI only reads: it gets the issue's text and the user's recent chat
 messages, and never changes anything in the database.
@@ -153,7 +154,7 @@ like `{"error": "message"}`.
 | PATCH, DELETE | `/admin/users/{user_id}` | system admin | Set `is_admin` / delete a user |
 | GET | `/admin/teams` | system admin | All teams |
 | DELETE | `/admin/teams/{team_id}` | system admin | Delete a team |
-| GET | `/admin/audit-logs` | system admin | The 500 most recent deletions |
+| GET | `/admin/audit-logs` | system admin | The 500 most recent user and team deletions |
 
 ## Project layout
 
