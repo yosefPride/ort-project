@@ -3,7 +3,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::db::Model;
 
-/// A record of something being deleted, shown in the admin panel. The actor's
+/// A record of an admin deleting a user or a team, shown in the admin panel. The actor's
 /// name and email are copied in, so the entry still reads well after that
 /// user is deleted too.
 #[derive(Serialize, Deserialize)]

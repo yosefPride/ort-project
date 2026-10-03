@@ -61,7 +61,7 @@ pub async fn delete_team(Admin(admin): Admin, state: Data<AppState>, path: Path<
     Ok(HttpResponse::NoContent().finish())
 }
 
-/// The 500 most recent deletions.
+/// The 500 most recent user and team deletions.
 pub async fn audit_logs(_: Admin, state: Data<AppState>) -> Result<Json<Vec<AuditLog>>> {
     let logs = collection::<AuditLog>(&state.db).find(doc! {}).sort(doc! { "created_at": -1 }).limit(500).await?;
     Ok(Json(logs.try_collect().await?))

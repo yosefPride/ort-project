@@ -7,7 +7,7 @@ import { useGet } from '../../hooks/useGet';
 import { formatDateTime } from '../../utils/dates';
 import { ACTION_LABELS } from './actionLabels';
 
-// Every deletion in the system, newest first.
+// User and team deletions, newest first.
 export default function AuditLogPanel() {
   const { data: logs = [], status } = useGet('/admin/audit-logs');
   const [action, setAction] = useState('');
@@ -29,7 +29,7 @@ export default function AuditLogPanel() {
         <label className="flex flex-col gap-1 text-xs text-slate-400">
           Performed by
           <Select value={actor} onChange={(e) => setActor(e.target.value)}>
-            <option value="">All users</option>
+            <option value="">All admins</option>
             {actors.map(([id, name]) => <option key={id} value={id}>{name}</option>)}
           </Select>
         </label>

@@ -3,7 +3,6 @@ use actix_web::web::{Json, Path};
 use mongodb::bson::doc;
 
 use super::model::*;
-use crate::admin::audit::audit;
 use crate::db::{new_id, now};
 use crate::error::{AppError, Result};
 use crate::issue::model::{Issue, Status};
@@ -42,7 +41,6 @@ pub async fn delete(member: Member, path: Path<(String, String, String)>) -> Res
     let comment = comments.get(&comment_id).await?;
     member.require_admin_or(&[&comment.author_id])?;
     comments.delete(doc! { "_id": &comment.id }).await?;
-    audit(&member.db, &member.user, "comment.delete", format!("\"{}\"", comment.body)).await?;
     Ok(HttpResponse::NoContent().finish())
 }
 
@@ -65,6 +63,5 @@ pub async fn unreact(member: Member, path: Path<(String, String, String)>) -> Re
     let mut comment = comments.get(&comment_id).await?;
     comment.reactions.retain(|r| r.user_id != member.user.id);
     comments.replace(&comment.id, &comment).await?;
-    audit(&member.db, &member.user, "reaction.delete", format!("on comment \"{}\"", comment.body)).await?;
     Ok(Json(comment))
 }

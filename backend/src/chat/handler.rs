@@ -5,7 +5,6 @@ use mongodb::bson::doc;
 use super::gemini::ask_gemini;
 use super::model::*;
 use crate::AppState;
-use crate::admin::audit::audit;
 use crate::db::{new_id, now};
 use crate::error::Result;
 use crate::issue::model::Issue;
@@ -28,8 +27,6 @@ pub async fn clear(member: Member, path: Path<(String, String)>) -> Result<HttpR
     let issue = member.scoped::<Issue>().get(&issue_id).await?;
     let chat = member.scoped::<ChatMessage>();
     chat.delete(doc! { "issue_id": &issue.id, "user_id": &member.user.id }).await?;
-    let detail = format!("on #{} \"{}\" in team \"{}\"", issue.number, issue.title, member.team.name);
-    audit(&member.db, &member.user, "chat.delete", detail).await?;
     Ok(HttpResponse::NoContent().finish())
 }
 

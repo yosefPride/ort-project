@@ -4,7 +4,6 @@ use mongodb::bson::doc;
 use mongodb::options::ReturnDocument;
 
 use super::model::*;
-use crate::admin::audit::audit;
 use crate::chat::model::ChatMessage;
 use crate::comment::model::Comment;
 use crate::db::{collection, new_id, now};
@@ -76,7 +75,5 @@ pub async fn delete(member: Member, path: Path<(String, String)>) -> Result<Http
     member.scoped::<Issue>().delete(doc! { "_id": &issue.id }).await?;
     member.scoped::<Comment>().delete(doc! { "issue_id": &issue.id }).await?;
     member.scoped::<ChatMessage>().delete(doc! { "issue_id": &issue.id }).await?;
-    let detail = format!("#{} \"{}\" in team \"{}\"", issue.number, issue.title, member.team.name);
-    audit(&member.db, &member.user, "issue.delete", detail).await?;
     Ok(HttpResponse::NoContent().finish())
 }

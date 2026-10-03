@@ -5,7 +5,6 @@ use mongodb::bson::doc;
 use super::extractor::Member;
 use super::model::*;
 use crate::AppState;
-use crate::admin::audit::audit;
 use crate::auth::extractor::AuthUser;
 use crate::db::{Scoped, collection, find_all, new_id, now};
 use crate::error::{AppError, Result};
@@ -125,9 +124,5 @@ pub async fn remove_member(member: Member, path: Path<(String, String)>) -> Resu
     // Their open work in this team goes back to unassigned.
     let issues = member.scoped::<Issue>();
     issues.update(doc! { "assignee_id": &user_id }, doc! { "$set": { "assignee_id": null } }).await?;
-
-    let removed = collection::<User>(&member.db).find_one(doc! { "_id": &user_id }).await?;
-    let removed = removed.map_or(user_id, |user| user.email);
-    audit(&member.db, &member.user, "member.remove", format!("{removed} from team \"{}\"", team.name)).await?;
     Ok(HttpResponse::NoContent().finish())
 }
