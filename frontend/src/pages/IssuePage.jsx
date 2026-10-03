@@ -18,7 +18,7 @@ import IssueForm from '../features/issue/IssueForm';
 import IssueMeta from '../features/issue/IssueMeta';
 import IssueTab from '../features/issue/IssueTab';
 
-const PANEL = 'h-128 rounded-xl border border-white/10 bg-white/5 p-6 lg:h-auto lg:min-h-0 lg:flex-1';
+const PANEL = 'h-128 rounded-xl border border-white/10 bg-white/2 p-6 lg:h-auto lg:min-h-0 lg:flex-1';
 
 export default function IssuePage({ me }) {
   const { issueId } = useParams();
@@ -80,7 +80,7 @@ export default function IssuePage({ me }) {
       {/* From lg up the page is pinned to 80vh and long content scrolls inside its card. */}
       <div className="flex flex-col gap-6 lg:grid lg:h-[80vh] lg:grid-cols-[minmax(0,1fr)_320px] lg:items-stretch">
         <div className="flex flex-col gap-6 lg:min-h-0">
-          <div className="break-words rounded-xl border border-white/10 bg-white/5 p-6 lg:shrink-0">
+          <div className="wrap-break rounded-xl border border-white/10 bg-white/2 p-6 lg:shrink-0">
             <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1 text-sm text-slate-500">
               <p>
                 <span className="font-medium">#{issue.number}</span> ·{' '}
@@ -100,7 +100,7 @@ export default function IssuePage({ me }) {
               </IssueTab>
             </div>
             {/* Hidden rather than removed, so a half-written comment survives a tab switch. */}
-            <div className={tab === 'details' ? `${PANEL} overflow-y-auto break-words text-sm text-slate-200` : 'hidden'}>
+            <div className={tab === 'details' ? `${PANEL} overflow-y-auto wrap-break text-sm text-slate-200` : 'hidden'}>
               <Markdown>{issue.description}</Markdown>
             </div>
             <div className={tab === 'comments' ? `${PANEL} flex flex-col` : 'hidden'}>

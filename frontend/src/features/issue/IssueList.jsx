@@ -22,23 +22,26 @@ export default function IssueList({ teamId }) {
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="flex flex-wrap gap-3">
-        <Input type="search" {...bind('search')} placeholder="Search by title" aria-label="Search issues" className="flex-1 text-sm sm:max-w-xs" />
-        <Select {...bind('status')} aria-label="Filter by status">
-          <option value="">All statuses</option>
-          <option value="open">Open</option>
-          <option value="closed">Closed</option>
-        </Select>
-        <Select {...bind('priority')} aria-label="Filter by priority">
-          <option value="">All priorities</option>
-          <option value="low">Low</option>
-          <option value="high">High</option>
-          <option value="critical">Critical</option>
-        </Select>
-        <Select {...bind('creator')} aria-label="Filter by creator">
-          <option value="">Everyone</option>
-          {members.map((member) => <option key={member._id} value={member._id}>{member.name}</option>)}
-        </Select>
+      {/* Mobile: search on its own row, the three filters sharing the row below. */}
+      <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap">
+        <Input type="search" {...bind('search')} placeholder="Search by title" aria-label="Search issues" className="text-sm sm:max-w-xs sm:flex-1" />
+        <div className="grid grid-cols-3 gap-3 sm:flex">
+          <Select className="min-w-0" {...bind('status')} aria-label="Filter by status">
+            <option value="">All statuses</option>
+            <option value="open">Open</option>
+            <option value="closed">Closed</option>
+          </Select>
+          <Select className="min-w-0" {...bind('priority')} aria-label="Filter by priority">
+            <option value="">All priorities</option>
+            <option value="low">Low</option>
+            <option value="high">High</option>
+            <option value="critical">Critical</option>
+          </Select>
+          <Select className="min-w-0" {...bind('creator')} aria-label="Filter by creator">
+            <option value="">Everyone</option>
+            {members.map((member) => <option key={member._id} value={member._id}>{member.name}</option>)}
+          </Select>
+        </div>
       </div>
 
       {status === 'pending' && <Loading />}

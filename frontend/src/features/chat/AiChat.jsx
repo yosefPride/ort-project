@@ -10,7 +10,7 @@ export default function AiChat({ issue, me }) {
       <ChatPanel
         issue={issue}
         me={me}
-        className="flex h-132 flex-col rounded-xl border border-white/10 bg-white/5 lg:h-auto lg:min-h-0 lg:flex-1"
+        className="flex h-132 flex-col rounded-xl border border-white/10 bg-white/2 lg:h-auto lg:min-h-0 lg:flex-1"
         onToggleExpand={() => setIsExpanded(true)}
       />
       <Dialog.Root open={isExpanded} onOpenChange={setIsExpanded}>

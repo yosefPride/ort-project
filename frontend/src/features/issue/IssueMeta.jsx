@@ -20,7 +20,7 @@ export default function IssueMeta({ issue, team, canEdit }) {
   const assignees = [{ value: '', label: 'Unassigned' }, ...members.map((m) => ({ value: m._id, label: m.name }))];
 
   return (
-    <div className="rounded-xl border border-white/10 bg-white/5 p-6 lg:shrink-0">
+    <div className="rounded-xl border border-white/10 bg-white/2 p-6 lg:shrink-0">
       <dl className="flex flex-col gap-4">
         <MetaRow label="Priority">
           <MetaPicker label="priority" value={issue.priority} options={choices(['low', 'high', 'critical'])} canEdit={canEdit} onSelect={(priority) => save({ priority })}>
