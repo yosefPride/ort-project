@@ -7,7 +7,7 @@ import AuthPage from './pages/AuthPage';
 import DashboardPage from './pages/DashboardPage';
 import IssuePage from './pages/IssuePage';
 import IssuesPage from './pages/IssuesPage';
-import Landing from './pages/Landing';
+import Landing from './pages/LandingPage';
 import NotFound from './pages/NotFound';
 import TeamPage from './pages/TeamPage';
 

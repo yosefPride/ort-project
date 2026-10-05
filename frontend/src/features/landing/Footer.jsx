@@ -1,5 +1,5 @@
 import Badge from '../../components/ui/Badge';
-import HexagonBackground from './HexagonBackground';
+import HexagonBackground from './art/HexagonBackground';
 
 // Bump by hand on release.
 const VERSION = 'v0.1.0';
