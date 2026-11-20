@@ -17,7 +17,7 @@ pub struct Config {
 impl Config {
     /// Stops the server with a clear message if a required setting is missing or invalid.
     pub fn from_env() -> Config {
-        dotenvy::dotenv().ok();
+        dotenvy::dotenv().ok(); // load .env file if present, but don't fail if it's missing
         let or = |name: &str, default: &str| env::var(name).unwrap_or(default.to_string());
         Config {
             mongo_uri: env::var("MONGO_URI").expect("MONGO_URI must be set"),
