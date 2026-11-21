@@ -1,6 +1,6 @@
 import { audit } from '../admin/audit.js';
 import { CHAT_MESSAGES, COMMENTS, ISSUES, TEAMS } from '../db/index.js';
-import { badRequest } from '../error.js';
+import { badRequest, conflict, notFound } from '../error.js';
 
 // A `teams` document:
 //   _id, name, created_at
@@ -29,10 +29,40 @@ export function checkKeepsAdmin(team, userId) {
   }
 }
 
-/** Saves a changed name or member list (the issue counter is only ever changed by `$inc`). */
-export async function saveTeam(db, team) {
-  const changes = { name: team.name, members: team.members };
-  await db.collection(TEAMS).updateOne({ _id: team._id }, { $set: changes });
+// Members are changed one at a time with $push, $pull and $set on a single
+// member, never by writing the whole list back, so two changes made at the
+// same moment can't undo each other. The "keeps an admin" rule is part of the
+// update's filter, so it is checked against the team as it is when it changes.
+
+/** Matches the team only while someone other than `userId` is an admin. */
+const otherAdmin = (userId) => ({ members: { $elemMatch: { user_id: { $ne: userId }, role: 'admin' } } });
+
+/** Called when a member update matched nothing: throws the reason. */
+async function unchanged(db, teamId, userId) {
+  const team = await db.collection(TEAMS).findOne({ _id: teamId });
+  if (!team || !roleOf(team, userId)) throw notFound();
+  checkKeepsAdmin(team, userId);
+  throw conflict('The team just changed, try again');
+}
+
+export async function addTeamMember(db, teamId, userId, role) {
+  const filter = { _id: teamId, 'members.user_id': { $ne: userId } };
+  const result = await db.collection(TEAMS).updateOne(filter, { $push: { members: { user_id: userId, role } } });
+  if (result.matchedCount === 0) throw conflict('Already a member of this team');
+}
+
+export async function setRole(db, teamId, userId, role) {
+  const filter = { _id: teamId, 'members.user_id': userId, ...(role === 'admin' ? {} : otherAdmin(userId)) };
+  // `$[m]` names the member to change; plain `$` could point at the other admin.
+  const update = { $set: { 'members.$[m].role': role } };
+  const result = await db.collection(TEAMS).updateOne(filter, update, { arrayFilters: [{ 'm.user_id': userId }] });
+  if (result.matchedCount === 0) await unchanged(db, teamId, userId);
+}
+
+export async function removeTeamMember(db, teamId, userId) {
+  const filter = { _id: teamId, 'members.user_id': userId, ...otherAdmin(userId) };
+  const result = await db.collection(TEAMS).updateOne(filter, { $pull: { members: { user_id: userId } } });
+  if (result.matchedCount === 0) await unchanged(db, teamId, userId);
 }
 
 /**

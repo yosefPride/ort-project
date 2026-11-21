@@ -1,6 +1,6 @@
 import { AUDIT_LOGS, CHAT_MESSAGES, ISSUES, SESSIONS, TEAMS, USERS, findAll } from '../db/index.js';
 import { badRequest, notFound } from '../error.js';
-import { deleteTeam as deleteTeamData, isLastAdmin, roleOf, saveTeam, teamView } from '../team/model.js';
+import { deleteTeam as deleteTeamData, isLastAdmin, removeTeamMember, roleOf, setRole, teamView } from '../team/model.js';
 import { publicUser } from '../user/model.js';
 import { audit } from './audit.js';
 
@@ -56,23 +56,24 @@ export async function deleteUser(req, res) {
   // leaves the user and all their teams as they were.
   const replacements = teams.map((team) => replacementFor(team, user._id, req.body?.replacements));
 
-  await db.collection(USERS).deleteOne({ _id: user._id });
-  await db.collection(SESSIONS).deleteMany({ user_id: user._id });
-  await db.collection(CHAT_MESSAGES).deleteMany({ user_id: user._id });
+  // Teams are handled before the account is deleted, so if this stops partway
+  // the user still exists and the delete can simply be tried again.
   for (const [i, team] of teams.entries()) {
     if (team.members.length === 1) {
       await deleteTeamData(db, team, req.user);
       continue;
     }
-    team.members = team.members.filter((m) => m.user_id !== user._id);
     const replacementId = replacements[i];
     if (replacementId) {
-      team.members.find((m) => m.user_id === replacementId).role = 'admin';
+      await setRole(db, team._id, replacementId, 'admin');
       const replacement = await db.collection(USERS).findOne({ _id: replacementId });
       await audit(db, req.user, 'team.admin_replace', `${replacement.name} replaced ${user.name} as admin of "${team.name}"`);
     }
-    await saveTeam(db, team);
+    await removeTeamMember(db, team._id, user._id);
   }
+  await db.collection(USERS).deleteOne({ _id: user._id });
+  await db.collection(SESSIONS).deleteMany({ user_id: user._id });
+  await db.collection(CHAT_MESSAGES).deleteMany({ user_id: user._id });
   const unassign = { $set: { assignee_id: null } };
   await db.collection(ISSUES).updateMany({ assignee_id: user._id }, unassign);
   await audit(db, req.user, 'user.delete', `${user.name} (${user.email})`);

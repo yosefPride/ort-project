@@ -1,8 +1,8 @@
 import { ISSUES, Scoped, TEAMS, USERS, findAll, newId, now } from '../db/index.js';
-import { badRequest, conflict, notFound } from '../error.js';
+import { badRequest } from '../error.js';
 import { publicUser } from '../user/model.js';
 import { check, checkEmail, oneOf } from '../validation.js';
-import { ROLES, checkKeepsAdmin, deleteTeam, roleOf, saveTeam, teamView } from './model.js';
+import { ROLES, addTeamMember, deleteTeam, removeTeamMember, roleOf, setRole, teamView } from './model.js';
 
 /**
  * The user's teams. The issue counts feed the dashboard tiles, so the
@@ -49,8 +49,8 @@ export async function create(req, res) {
 export async function rename(req, res) {
   const { member } = req;
   member.requireAdmin();
-  member.team.name = check('Team name', req.body?.name, 60);
-  await saveTeam(req.app.locals.db, member.team);
+  const name = check('Team name', req.body?.name, 60);
+  await req.app.locals.db.collection(TEAMS).updateOne({ _id: member.team._id }, { $set: { name } });
   res.status(204).end();
 }
 
@@ -91,29 +91,17 @@ export async function addMember(req, res) {
   const { member } = req;
   member.requireAdmin();
   const role = oneOf('Role', req.body?.role, ROLES);
-  const user = await findByEmail(req.app.locals.db, req.body?.email);
-  const { team } = member;
-  if (roleOf(team, user._id)) {
-    throw conflict('Already a member of this team');
-  }
-  team.members.push({ user_id: user._id, role });
-  await saveTeam(req.app.locals.db, team);
+  const { db } = req.app.locals;
+  const user = await findByEmail(db, req.body?.email);
+  await addTeamMember(db, member.team._id, user._id, role);
   res.status(204).end();
 }
 
 export async function changeRole(req, res) {
   const { member } = req;
   member.requireAdmin();
-  const { user_id: userId } = req.params;
   const role = oneOf('Role', req.body?.role, ROLES);
-  const { team } = member;
-  if (role !== 'admin') {
-    checkKeepsAdmin(team, userId);
-  }
-  const membership = team.members.find((m) => m.user_id === userId);
-  if (!membership) throw notFound();
-  membership.role = role;
-  await saveTeam(req.app.locals.db, team);
+  await setRole(req.app.locals.db, member.team._id, req.params.user_id, role);
   res.status(204).end();
 }
 
@@ -124,11 +112,7 @@ export async function removeMember(req, res) {
   if (userId !== member.user._id) {
     member.requireAdmin();
   }
-  const { team } = member;
-  if (!roleOf(team, userId)) throw notFound();
-  checkKeepsAdmin(team, userId);
-  team.members = team.members.filter((m) => m.user_id !== userId);
-  await saveTeam(req.app.locals.db, team);
+  await removeTeamMember(req.app.locals.db, member.team._id, userId);
   // Their open work in this team goes back to unassigned. Closed issues keep
   // them as assignee (shown as "Former member"), and editing one means
   // choosing a new assignee, since the assignee must be a team member.
