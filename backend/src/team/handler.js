@@ -93,7 +93,7 @@ export async function addMember(req, res) {
   const role = oneOf('Role', req.body?.role, ROLES);
   const { db } = req.app.locals;
   const user = await findByEmail(db, req.body?.email);
-  await addTeamMember(db, member.team._id, user._id, role);
+  await addTeamMember(db, member.team, user._id, role);
   res.status(204).end();
 }
 
@@ -101,7 +101,7 @@ export async function changeRole(req, res) {
   const { member } = req;
   member.requireAdmin();
   const role = oneOf('Role', req.body?.role, ROLES);
-  await setRole(req.app.locals.db, member.team._id, req.params.user_id, role);
+  await setRole(req.app.locals.db, member.team, req.params.user_id, role);
   res.status(204).end();
 }
 
@@ -112,7 +112,7 @@ export async function removeMember(req, res) {
   if (userId !== member.user._id) {
     member.requireAdmin();
   }
-  await removeTeamMember(req.app.locals.db, member.team._id, userId);
+  await removeTeamMember(req.app.locals.db, member.team, userId);
   // Their open work in this team goes back to unassigned. Closed issues keep
   // them as assignee (shown as "Former member"), and editing one means
   // choosing a new assignee, since the assignee must be a team member.

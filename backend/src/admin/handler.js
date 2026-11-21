@@ -54,22 +54,21 @@ export async function deleteUser(req, res) {
   const teams = await findAll(db.collection(TEAMS), { 'members.user_id': user._id }, { name: 1 });
   // Every replacement is checked before anything changes, so a missing one
   // leaves the user and all their teams as they were.
-  const replacements = teams.map((team) => replacementFor(team, user._id, req.body?.replacements));
+  const changes = teams.map((team) => ({ team, replacementId: replacementFor(team, user._id, req.body?.replacements) }));
 
   // Teams are handled before the account is deleted, so if this stops partway
   // the user still exists and the delete can simply be tried again.
-  for (const [i, team] of teams.entries()) {
+  for (const { team, replacementId } of changes) {
     if (team.members.length === 1) {
       await deleteTeamData(db, team, req.user);
       continue;
     }
-    const replacementId = replacements[i];
     if (replacementId) {
-      await setRole(db, team._id, replacementId, 'admin');
+      await setRole(db, team, replacementId, 'admin');
       const replacement = await db.collection(USERS).findOne({ _id: replacementId });
       await audit(db, req.user, 'team.admin_replace', `${replacement.name} replaced ${user.name} as admin of "${team.name}"`);
     }
-    await removeTeamMember(db, team._id, user._id);
+    await removeTeamMember(db, team, user._id);
   }
   await db.collection(USERS).deleteOne({ _id: user._id });
   await db.collection(SESSIONS).deleteMany({ user_id: user._id });

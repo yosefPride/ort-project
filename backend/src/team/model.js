@@ -29,40 +29,31 @@ export function checkKeepsAdmin(team, userId) {
   }
 }
 
-// Members are changed one at a time with $push, $pull and $set on a single
-// member, never by writing the whole list back, so two changes made at the
-// same moment can't undo each other. The "keeps an admin" rule is part of the
-// update's filter, so it is checked against the team as it is when it changes.
+// Each of these changes the loaded `team` and saves its member list.
 
-/** Matches the team only while someone other than `userId` is an admin. */
-const otherAdmin = (userId) => ({ members: { $elemMatch: { user_id: { $ne: userId }, role: 'admin' } } });
+async function saveMembers(db, team) {
+  await db.collection(TEAMS).updateOne({ _id: team._id }, { $set: { members: team.members } });
+}
 
-/** Called when a member update matched nothing: throws the reason. */
-async function unchanged(db, teamId, userId) {
-  const team = await db.collection(TEAMS).findOne({ _id: teamId });
-  if (!team || !roleOf(team, userId)) throw notFound();
+export async function addTeamMember(db, team, userId, role) {
+  if (roleOf(team, userId)) throw conflict('Already a member of this team');
+  team.members.push({ user_id: userId, role });
+  await saveMembers(db, team);
+}
+
+export async function setRole(db, team, userId, role) {
+  const membership = team.members.find((m) => m.user_id === userId);
+  if (!membership) throw notFound();
+  if (role !== 'admin') checkKeepsAdmin(team, userId);
+  membership.role = role;
+  await saveMembers(db, team);
+}
+
+export async function removeTeamMember(db, team, userId) {
+  if (!roleOf(team, userId)) throw notFound();
   checkKeepsAdmin(team, userId);
-  throw conflict('The team just changed, try again');
-}
-
-export async function addTeamMember(db, teamId, userId, role) {
-  const filter = { _id: teamId, 'members.user_id': { $ne: userId } };
-  const result = await db.collection(TEAMS).updateOne(filter, { $push: { members: { user_id: userId, role } } });
-  if (result.matchedCount === 0) throw conflict('Already a member of this team');
-}
-
-export async function setRole(db, teamId, userId, role) {
-  const filter = { _id: teamId, 'members.user_id': userId, ...(role === 'admin' ? {} : otherAdmin(userId)) };
-  // `$[m]` names the member to change; plain `$` could point at the other admin.
-  const update = { $set: { 'members.$[m].role': role } };
-  const result = await db.collection(TEAMS).updateOne(filter, update, { arrayFilters: [{ 'm.user_id': userId }] });
-  if (result.matchedCount === 0) await unchanged(db, teamId, userId);
-}
-
-export async function removeTeamMember(db, teamId, userId) {
-  const filter = { _id: teamId, 'members.user_id': userId, ...otherAdmin(userId) };
-  const result = await db.collection(TEAMS).updateOne(filter, { $pull: { members: { user_id: userId } } });
-  if (result.matchedCount === 0) await unchanged(db, teamId, userId);
+  team.members = team.members.filter((m) => m.user_id !== userId);
+  await saveMembers(db, team);
 }
 
 /**
