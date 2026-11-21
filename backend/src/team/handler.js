@@ -129,7 +129,9 @@ export async function removeMember(req, res) {
   checkKeepsAdmin(team, userId);
   team.members = team.members.filter((m) => m.user_id !== userId);
   await saveTeam(req.app.locals.db, team);
-  // Their open work in this team goes back to unassigned.
-  await member.scoped(ISSUES).update({ assignee_id: userId }, { $set: { assignee_id: null } });
+  // Their open work in this team goes back to unassigned. Closed issues keep
+  // them as assignee (shown as "Former member"), and editing one means
+  // choosing a new assignee, since the assignee must be a team member.
+  await member.scoped(ISSUES).update({ assignee_id: userId, status: 'open' }, { $set: { assignee_id: null } });
   res.status(204).end();
 }
