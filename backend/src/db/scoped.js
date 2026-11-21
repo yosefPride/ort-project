@@ -36,9 +36,12 @@ export class Scoped {
     await this.#collection.insertOne(item);
   }
 
-  /** Saves a changed document back over the stored one. */
-  async replace(id, item) {
-    await this.#collection.replaceOne(this.#scope({ _id: id }), item);
+  /**
+   * Saves a changed document over the stored one that matches `filter`. The
+   * result's `matchedCount` says whether one matched.
+   */
+  replace(filter, item) {
+    return this.#collection.replaceOne(this.#scope(filter), item);
   }
 
   async update(filter, update) {

@@ -1,5 +1,6 @@
 import { CHAT_MESSAGES, COMMENTS, ISSUES, TEAMS, newId, now } from '../db/index.js';
-import { notFound } from '../error.js';
+import { conflict, notFound } from '../error.js';
+import { requireString } from '../validation.js';
 import { validateIssueInput } from './model.js';
 
 /**
@@ -41,13 +42,20 @@ export async function create(req, res) {
   res.json(issue);
 }
 
-/** Team admins, the creator and the assignee can edit an issue. */
+/**
+ * Team admins, the creator and the assignee can edit an issue.
+ *
+ * The client sends back the `updated_at` of the issue it edited. The save
+ * only goes through if the issue hasn't been saved since, so one person's
+ * edit can't silently overwrite another's.
+ */
 export async function update(req, res) {
   const { member } = req;
   const issues = member.scoped(ISSUES);
   const issue = await issues.get(req.params.issue_id);
   member.requireAdminOr([issue.creator_id, issue.assignee_id]);
 
+  const editedVersion = requireString('updated_at', req.body?.updated_at);
   const input = validateIssueInput(req.body, member.team);
   issue.title = input.title;
   issue.description = input.description;
@@ -55,7 +63,10 @@ export async function update(req, res) {
   issue.status = input.status ?? issue.status;
   issue.assignee_id = input.assignee_id;
   issue.updated_at = now();
-  await issues.replace(issue._id, issue);
+  const result = await issues.replace({ _id: issue._id, updated_at: editedVersion }, issue);
+  if (result.matchedCount === 0) {
+    throw conflict('Someone else changed this issue. Reload to see their changes');
+  }
   res.json(issue);
 }
 

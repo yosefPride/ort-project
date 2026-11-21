@@ -23,7 +23,8 @@ export default function IssueForm({ teamId, issue, onDone, onCancel }) {
   function submit(e) {
     e.preventDefault();
     const path = issue ? `/teams/${teamId}/issues/${issue._id}` : `/teams/${teamId}/issues`;
-    const body = { ...form, assignee_id: form.assignee_id || null };
+    // `updated_at` tells the server which version was edited, so it can refuse a stale edit.
+    const body = { ...form, assignee_id: form.assignee_id || null, updated_at: issue?.updated_at };
     send.mutate({ path, method: issue ? 'PUT' : 'POST', body }, { onSuccess: onDone });
   }
 
