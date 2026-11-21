@@ -9,7 +9,8 @@ export async function createIndexes(db) {
     ['teams', { 'members.user_id': 1 }, {}],
     ['issues', { team_id: 1, number: 1 }, unique],
     ['comments', { team_id: 1, issue_id: 1 }, {}],
-    ['chat_messages', { team_id: 1, issue_id: 1, user_id: 1 }, {}],
+    ['chats', { team_id: 1, issue_id: 1, user_id: 1 }, {}],
+    ['chat_messages', { team_id: 1, chat_id: 1 }, {}],
   ];
   for (const [name, keys, options] of indexes) {
     await db.collection(name).createIndex(keys, options);

@@ -1,4 +1,4 @@
-import { AUDIT_LOGS, CHAT_MESSAGES, ISSUES, SESSIONS, TEAMS, USERS, findAll } from '../db/index.js';
+import { AUDIT_LOGS, CHATS, CHAT_MESSAGES, ISSUES, SESSIONS, TEAMS, USERS, findAll } from '../db/index.js';
 import { badRequest, notFound } from '../error.js';
 import { deleteTeam as deleteTeamData, isLastAdmin, removeTeamMember, roleOf, setRole, teamView } from '../team/model.js';
 import { publicUser } from '../user/model.js';
@@ -75,6 +75,7 @@ export async function deleteUser(req, res) {
   }
   await db.collection(USERS).deleteOne({ _id: user._id });
   await db.collection(SESSIONS).deleteMany({ user_id: user._id });
+  await db.collection(CHATS).deleteMany({ user_id: user._id });
   await db.collection(CHAT_MESSAGES).deleteMany({ user_id: user._id });
   const unassign = { $set: { assignee_id: null } };
   await db.collection(ISSUES).updateMany({ assignee_id: user._id }, unassign);

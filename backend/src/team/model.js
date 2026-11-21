@@ -1,5 +1,5 @@
 import { audit } from '../admin/audit.js';
-import { CHAT_MESSAGES, COMMENTS, ISSUES, TEAMS } from '../db/index.js';
+import { CHATS, CHAT_MESSAGES, COMMENTS, ISSUES, TEAMS } from '../db/index.js';
 import { badRequest, conflict, notFound } from '../error.js';
 
 // A `teams` document:
@@ -63,7 +63,7 @@ export async function removeTeamMember(db, team, userId) {
 export async function deleteTeam(db, team, actor) {
   // The team goes first: if this stops partway, nobody can reach what's left.
   await db.collection(TEAMS).deleteOne({ _id: team._id });
-  for (const name of [ISSUES, COMMENTS, CHAT_MESSAGES]) {
+  for (const name of [ISSUES, COMMENTS, CHATS, CHAT_MESSAGES]) {
     await db.collection(name).deleteMany({ team_id: team._id });
   }
   await audit(db, actor, 'team.delete', `Team "${team.name}"`);

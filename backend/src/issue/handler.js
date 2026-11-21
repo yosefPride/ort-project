@@ -1,4 +1,4 @@
-import { CHAT_MESSAGES, COMMENTS, ISSUES, TEAMS, newId, now } from '../db/index.js';
+import { CHATS, CHAT_MESSAGES, COMMENTS, ISSUES, TEAMS, newId, now } from '../db/index.js';
 import { conflict, notFound } from '../error.js';
 import { requireString } from '../validation.js';
 import { validateIssueInput } from './model.js';
@@ -78,6 +78,7 @@ export async function remove(req, res) {
 
   await member.scoped(ISSUES).delete({ _id: issue._id });
   await member.scoped(COMMENTS).delete({ issue_id: issue._id });
+  await member.scoped(CHATS).delete({ issue_id: issue._id });
   await member.scoped(CHAT_MESSAGES).delete({ issue_id: issue._id });
   res.status(204).end();
 }

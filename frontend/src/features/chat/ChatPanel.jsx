@@ -1,15 +1,20 @@
 import { useState } from 'react';
-import { Maximize2, Minimize2, Send, SquarePen } from 'lucide-react';
+import { Maximize2, Minimize2, Send, SquarePen, Trash2 } from 'lucide-react';
 import brandMark from '../../assets/brand-mark.svg';
 import ConfirmModal from '../../components/ui/ConfirmModal';
 import ErrorText from '../../components/ui/ErrorText';
 import Input from '../../components/ui/Input';
+import Select from '../../components/ui/Select';
 import { useGet } from '../../hooks/useGet';
 import { useSend } from '../../hooks/useSend';
 import ChatBubble from './ChatBubble';
 import TypingIndicator from './TypingIndicator';
 
 const MAX_LENGTH = 2000;
+
+// `chatId` is the open chat: null means the newest one, NEW_CHAT means a new
+// chat that is created when its first message is sent.
+const NEW_CHAT = 'new';
 
 // The two quick actions just send a ready-made question.
 const QUICK_ACTIONS = [
@@ -27,40 +32,59 @@ const PILL = 'rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-xs
 
 // The chat itself. It's rendered twice (side panel and the expanded dialog);
 // both read the same cached data, so they always match.
-export default function ChatPanel({ issue, me, className, isExpanded, onToggleExpand }) {
-  const path = `/teams/${issue.team_id}/issues/${issue._id}/chat`;
-  const { data: messages = [], isPending } = useGet(path);
-  const send = useSend(path);
-  const clear = useSend(path);
+export default function ChatPanel({ issue, me, chatId, onSelectChat, className, isExpanded, onToggleExpand }) {
+  const chatsPath = `/teams/${issue.team_id}/issues/${issue._id}/chats`;
+  const { data: chats = [], isLoading: isLoadingChats } = useGet(chatsPath);
+  const chat = chatId === NEW_CHAT ? null : chats.find((c) => c._id === chatId) ?? chats[0] ?? null;
+  const chatPath = `${chatsPath}/${chat?._id}`; // only used while a chat is open
+  const { data: messages = [], isLoading: isLoadingMessages } = useGet(chatPath, { enabled: chat !== null });
+  const send = useSend(chatsPath);
+  const remove = useSend(chatsPath);
   const [draft, setDraft] = useState('');
-  const [isClearing, setIsClearing] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
   const pending = send.isPending ? send.variables.body.message : null;
   const hasActivity = messages.length > 0 || pending;
 
   function ask(message) {
     setDraft('');
     // Put the text back if sending fails, so nothing typed is lost.
-    send.mutate({ path, body: { message } }, { onError: () => setDraft(message) });
+    const onError = () => setDraft(message);
+    if (chat) {
+      send.mutate({ path: chatPath, body: { message } }, { onError });
+    } else {
+      // The first message creates the chat, which then becomes the open one.
+      send.mutate({ path: chatsPath, body: { message } }, { onError, onSuccess: (created) => onSelectChat(created._id) });
+    }
   }
 
   return (
     <div className={className}>
       <div className="flex items-center justify-between gap-2 border-b border-white/10 px-4 py-3">
-        <span className="text-sm font-semibold text-slate-300">Chat</span>
-        <div className="flex items-center gap-1">
+        {chats.length > 0 ? (
+          <Select value={chat?._id ?? NEW_CHAT} onChange={(e) => onSelectChat(e.target.value)} aria-label="Chat" className="min-w-0 flex-1 py-1 text-xs">
+            {!chat && <option value={NEW_CHAT}>New chat</option>}
+            {chats.map((c) => <option key={c._id} value={c._id}>{c.title}</option>)}
+          </Select>
+        ) : (
+          <span className="text-sm font-semibold text-slate-300">Chat</span>
+        )}
+        <div className="flex shrink-0 items-center gap-1">
           <button type="button" onClick={onToggleExpand} title={isExpanded ? 'Collapse' : 'Expand'} className={ICON_BUTTON}>
             {isExpanded ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
           </button>
-          <button type="button" onClick={() => setIsClearing(true)} disabled={!messages.length} title="Start a new chat" className={ICON_BUTTON}>
+          <button type="button" onClick={() => onSelectChat(NEW_CHAT)} disabled={!chat} title="New chat" className={ICON_BUTTON}>
             <SquarePen className="h-4 w-4" />
+          </button>
+          <button type="button" onClick={() => setIsDeleting(true)} disabled={!chat} title="Delete chat" className={ICON_BUTTON}>
+            <Trash2 className="h-4 w-4" />
           </button>
         </div>
       </div>
 
       {/* Centered only while empty: a centered column that overflows can't be scrolled to its top. */}
       <div className={`flex flex-1 flex-col gap-4 overflow-y-auto px-6 py-6 text-center ${!hasActivity ? 'items-center justify-center' : ''}`}>
-        {isPending && <p className="text-xs text-slate-500">Loading chat…</p>}
-        {!isPending && !hasActivity && (
+        {(isLoadingChats || isLoadingMessages) && <p className="text-xs text-slate-500">Loading chat…</p>}
+        {!isLoadingChats && !isLoadingMessages && !hasActivity && (
           <>
             <img src={brandMark} alt="" className="h-12 w-12 opacity-10" />
             <p className="text-xs text-slate-500">Ask about this issue, or try Summarize or Analyze below.</p>
@@ -102,15 +126,15 @@ export default function ChatPanel({ issue, me, className, isExpanded, onToggleEx
       </form>
 
       <ConfirmModal
-        isOpen={isClearing}
-        onClose={() => setIsClearing(false)}
-        title="Start a new chat"
-        confirmLabel="Delete and start over"
+        isOpen={isDeleting}
+        onClose={() => setIsDeleting(false)}
+        title="Delete chat"
+        confirmLabel="Delete chat"
         pendingLabel="Deleting…"
-        action={clear}
-        onConfirm={() => clear.mutate({ path, method: 'DELETE' }, { onSuccess: () => setIsClearing(false) })}
+        action={remove}
+        onConfirm={() => remove.mutate({ path: chatPath, method: 'DELETE' }, { onSuccess: () => setIsDeleting(false) })}
       >
-        This permanently deletes your conversation about this issue. This cannot be undone.
+        This permanently deletes this conversation. This cannot be undone.
       </ConfirmModal>
     </div>
   );

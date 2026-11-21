@@ -10,6 +10,7 @@ export const SESSIONS = 'sessions';
 export const TEAMS = 'teams';
 export const ISSUES = 'issues';
 export const COMMENTS = 'comments';
+export const CHATS = 'chats';
 export const CHAT_MESSAGES = 'chat_messages';
 export const AUDIT_LOGS = 'audit_logs';
 
