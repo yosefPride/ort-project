@@ -16,10 +16,15 @@ export function roleOf(team, userId) {
   return team.members.find((m) => m.user_id === userId)?.role;
 }
 
+/** Whether the user is the team's only admin. */
+export function isLastAdmin(team, userId) {
+  const admins = team.members.filter((m) => m.role === 'admin').length;
+  return roleOf(team, userId) === 'admin' && admins === 1;
+}
+
 /** A team must always keep at least one admin. */
 export function checkKeepsAdmin(team, userId) {
-  const admins = team.members.filter((m) => m.role === 'admin').length;
-  if (roleOf(team, userId) === 'admin' && admins === 1) {
+  if (isLastAdmin(team, userId)) {
     throw badRequest('A team needs an admin. Make someone else admin first');
   }
 }

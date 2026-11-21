@@ -1,7 +1,8 @@
 import { AUDIT_LOGS, newId, now } from '../db/index.js';
 
 /**
- * Call this after an admin deletes a user or a team. Nothing else is logged.
+ * Call this after an admin deletes a user or a team, or picks a new team
+ * admin in place of a deleted one. Nothing else is logged.
  *
  * The actor's name and email are copied into the `audit_logs` document, so
  * the entry still reads well after that user is deleted too.

@@ -1,6 +1,6 @@
 import { AUDIT_LOGS, CHAT_MESSAGES, ISSUES, SESSIONS, TEAMS, USERS, findAll } from '../db/index.js';
 import { badRequest, notFound } from '../error.js';
-import { deleteTeam as deleteTeamData, teamView } from '../team/model.js';
+import { deleteTeam as deleteTeamData, isLastAdmin, roleOf, saveTeam, teamView } from '../team/model.js';
 import { publicUser } from '../user/model.js';
 import { audit } from './audit.js';
 
@@ -22,8 +22,26 @@ export async function setAdmin(req, res) {
 }
 
 /**
+ * The member who becomes admin of `team` in place of the deleted user, or
+ * null if the team doesn't need one (it has another admin, or the user is its
+ * only member and the team is deleted with them).
+ */
+function replacementFor(team, userId, replacements) {
+  if (team.members.length === 1 || !isLastAdmin(team, userId)) return null;
+  const replacementId = replacements?.[team._id];
+  if (typeof replacementId !== 'string' || replacementId === userId || !roleOf(team, replacementId)) {
+    throw badRequest(`Choose a new admin for "${team.name}"`);
+  }
+  return replacementId;
+}
+
+/**
  * Deletes an account. Their comments stay (shown as "Former member"); their
  * sessions, private AI chats, team memberships and assignments are removed.
+ *
+ * Teams where they are the only member are deleted with them. Teams where they
+ * are the only admin need a replacement, sent as `replacements`:
+ * { team_id: user_id }.
  */
 export async function deleteUser(req, res) {
   const { user_id: userId } = req.params;
@@ -33,11 +51,28 @@ export async function deleteUser(req, res) {
   const { db } = req.app.locals;
   const user = await db.collection(USERS).findOne({ _id: userId });
   if (!user) throw notFound();
+  const teams = await findAll(db.collection(TEAMS), { 'members.user_id': user._id }, { name: 1 });
+  // Every replacement is checked before anything changes, so a missing one
+  // leaves the user and all their teams as they were.
+  const replacements = teams.map((team) => replacementFor(team, user._id, req.body?.replacements));
+
   await db.collection(USERS).deleteOne({ _id: user._id });
   await db.collection(SESSIONS).deleteMany({ user_id: user._id });
   await db.collection(CHAT_MESSAGES).deleteMany({ user_id: user._id });
-  const pull = { $pull: { members: { user_id: user._id } } };
-  await db.collection(TEAMS).updateMany({ 'members.user_id': user._id }, pull);
+  for (const [i, team] of teams.entries()) {
+    if (team.members.length === 1) {
+      await deleteTeamData(db, team, req.user);
+      continue;
+    }
+    team.members = team.members.filter((m) => m.user_id !== user._id);
+    const replacementId = replacements[i];
+    if (replacementId) {
+      team.members.find((m) => m.user_id === replacementId).role = 'admin';
+      const replacement = await db.collection(USERS).findOne({ _id: replacementId });
+      await audit(db, req.user, 'team.admin_replace', `${replacement.name} replaced ${user.name} as admin of "${team.name}"`);
+    }
+    await saveTeam(db, team);
+  }
   const unassign = { $set: { assignee_id: null } };
   await db.collection(ISSUES).updateMany({ assignee_id: user._id }, unassign);
   await audit(db, req.user, 'user.delete', `${user.name} (${user.email})`);
@@ -57,7 +92,7 @@ export async function deleteTeam(req, res) {
   res.status(204).end();
 }
 
-/** The 500 most recent user and team deletions. */
+/** The 500 most recent audit entries (user and team deletions, replaced team admins). */
 export async function auditLogs(req, res) {
   const logs = req.app.locals.db.collection(AUDIT_LOGS).find({}).sort({ created_at: -1 }).limit(500);
   res.json(await logs.toArray());
