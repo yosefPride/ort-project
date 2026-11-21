@@ -45,23 +45,29 @@ export async function remove(req, res) {
 /**
  * Sets the user's reaction. Each user has at most one reaction per comment,
  * so a new emoji replaces their old one.
+ *
+ * Only the user's own reaction is changed, never the whole list, so other
+ * people reacting at the same moment aren't undone.
  */
 export async function react(req, res) {
   const { member } = req;
   const emoji = check('Emoji', req.body?.emoji, 8);
+  const { _id: userId } = member.user;
+  const { comment_id: id } = req.params;
   const comments = member.scoped(COMMENTS);
-  const comment = await comments.get(req.params.comment_id);
-  comment.reactions = comment.reactions.filter((r) => r.user_id !== member.user._id);
-  comment.reactions.push({ user_id: member.user._id, emoji });
-  await comments.replace(comment._id, comment);
-  res.json(comment);
+  const changed = await comments.updateOne({ _id: id, 'reactions.user_id': userId }, { $set: { 'reactions.$.emoji': emoji } });
+  if (changed.matchedCount === 0) {
+    // They have no reaction yet. The filter stops two requests at once from both adding one.
+    const filter = { _id: id, 'reactions.user_id': { $ne: userId } };
+    await comments.updateOne(filter, { $push: { reactions: { user_id: userId, emoji } } });
+  }
+  res.json(await comments.get(id)); // also the 404 for a comment that doesn't exist
 }
 
 export async function unreact(req, res) {
   const { member } = req;
+  const { comment_id: id } = req.params;
   const comments = member.scoped(COMMENTS);
-  const comment = await comments.get(req.params.comment_id);
-  comment.reactions = comment.reactions.filter((r) => r.user_id !== member.user._id);
-  await comments.replace(comment._id, comment);
-  res.json(comment);
+  await comments.updateOne({ _id: id }, { $pull: { reactions: { user_id: member.user._id } } });
+  res.json(await comments.get(id));
 }

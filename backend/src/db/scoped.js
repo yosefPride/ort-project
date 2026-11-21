@@ -45,6 +45,11 @@ export class Scoped {
     await this.#collection.updateMany(this.#scope(filter), update);
   }
 
+  /** Changes one document. The result's `matchedCount` says whether the filter matched. */
+  updateOne(filter, update) {
+    return this.#collection.updateOne(this.#scope(filter), update);
+  }
+
   async delete(filter) {
     await this.#collection.deleteMany(this.#scope(filter));
   }
