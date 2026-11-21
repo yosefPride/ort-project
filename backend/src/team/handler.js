@@ -1,4 +1,4 @@
-import { ISSUES, Scoped, TEAMS, USERS, findAll, newId, now } from '../db/index.js';
+import { CHATS, CHAT_MESSAGES, ISSUES, Scoped, TEAMS, USERS, findAll, newId, now } from '../db/index.js';
 import { badRequest } from '../error.js';
 import { publicUser } from '../user/model.js';
 import { check, checkEmail, oneOf } from '../validation.js';
@@ -117,5 +117,8 @@ export async function removeMember(req, res) {
   // them as assignee (shown as "Former member"), and editing one means
   // choosing a new assignee, since the assignee must be a team member.
   await member.scoped(ISSUES).update({ assignee_id: userId, status: 'open' }, { $set: { assignee_id: null } });
+  // Their private AI chats in this team are deleted.
+  await member.scoped(CHATS).delete({ user_id: userId });
+  await member.scoped(CHAT_MESSAGES).delete({ user_id: userId });
   res.status(204).end();
 }
