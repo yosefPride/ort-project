@@ -61,10 +61,11 @@ export async function removeTeamMember(db, team, userId) {
  * admins and by the system admin panel.
  */
 export async function deleteTeam(db, team, actor) {
+  // The team goes first: if this stops partway, nobody can reach what's left.
+  await db.collection(TEAMS).deleteOne({ _id: team._id });
   for (const name of [ISSUES, COMMENTS, CHAT_MESSAGES]) {
     await db.collection(name).deleteMany({ team_id: team._id });
   }
-  await db.collection(TEAMS).deleteOne({ _id: team._id });
   await audit(db, actor, 'team.delete', `Team "${team.name}"`);
 }
 

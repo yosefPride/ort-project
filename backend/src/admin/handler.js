@@ -17,7 +17,10 @@ export async function setAdmin(req, res) {
   if (userId === req.user._id) {
     throw badRequest("You can't change your own admin status");
   }
-  await req.app.locals.db.collection(USERS).updateOne({ _id: userId }, { $set: { is_admin: isAdmin } });
+  const { db } = req.app.locals;
+  const user = await db.collection(USERS).findOne({ _id: userId });
+  if (!user) throw notFound();
+  await db.collection(USERS).updateOne({ _id: user._id }, { $set: { is_admin: isAdmin } });
   res.status(204).end();
 }
 
