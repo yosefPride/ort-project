@@ -4,6 +4,7 @@ import Loading from '../../components/ui/Loading';
 import Table, { Td, Tr } from '../../components/ui/Table';
 import { useGet } from '../../hooks/useGet';
 import { formatDate } from '../../utils/dates';
+import DeleteUserModal from './DeleteUserModal';
 import SearchBox from './SearchBox';
 import { matches } from './matches';
 import { useAdminAction } from './useAdminAction';
@@ -12,6 +13,7 @@ export default function UsersPanel({ me }) {
   const [search, setSearch] = useState('');
   const { data: users = [], status } = useGet('/admin/users');
   const [confirm, modal] = useAdminAction();
+  const [deleting, setDeleting] = useState(null); // the user whose delete dialog is open
   const shown = users.filter((user) => matches(search, user.name, user.email));
   const who = (user) => <><span className="font-semibold text-white">{user.name}</span> ({user.email})</>;
 
@@ -48,19 +50,7 @@ export default function UsersPanel({ me }) {
                   ) : (
                     <>
                       <Button variant="ghost" size="sm" onClick={() => setAdmin(user, !user.is_admin)}>{user.is_admin ? 'Demote' : 'Promote'}</Button>
-                      <Button
-                        variant="dangerOutline"
-                        size="sm"
-                        onClick={() => confirm({
-                          title: `Delete ${user.name}`,
-                          confirmLabel: 'Delete user',
-                          message: <>Delete {who(user)}? This removes their account and every team membership. This cannot be undone.</>,
-                          method: 'DELETE',
-                          path: `/admin/users/${user._id}`,
-                        })}
-                      >
-                        Delete
-                      </Button>
+                      <Button variant="dangerOutline" size="sm" onClick={() => setDeleting(user)}>Delete</Button>
                     </>
                   )}
                 </div>
@@ -70,6 +60,7 @@ export default function UsersPanel({ me }) {
         </Table>
       )}
       {modal}
+      {deleting && <DeleteUserModal user={deleting} users={users} onClose={() => setDeleting(null)} />}
     </>
   );
 }
